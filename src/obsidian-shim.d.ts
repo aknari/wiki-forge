@@ -1,0 +1,168 @@
+declare interface HTMLElement {
+  empty(): void;
+  setText(value: string): void;
+  createEl(tag: string, options?: { text?: string; cls?: string }): HTMLElement;
+}
+
+declare module "obsidian" {
+  export interface TFileStat {
+    mtime: number;
+    ctime: number;
+    size: number;
+  }
+
+  export class TFile {
+    path: string;
+    name: string;
+    basename: string;
+    extension: string;
+    stat: TFileStat;
+  }
+
+  export class TFolder {
+    path: string;
+  }
+
+  export interface SecretStorage {
+    setSecret(id: string, secret: string): void;
+    getSecret(id: string): string | null;
+    deleteSecret(id: string): boolean;
+  }
+
+  /**
+   * The raw filesystem layer, below the vault index. Use it for paths the index
+   * does not list — dot-files, above all.
+   */
+  export interface DataAdapter {
+    exists(path: string): Promise<boolean>;
+    read(path: string): Promise<string>;
+    write(path: string, data: string): Promise<void>;
+    mkdir(path: string): Promise<void>;
+  }
+
+  export class Vault {
+    adapter: DataAdapter;
+    getAbstractFileByPath(path: string): TFile | TFolder | null;
+    getMarkdownFiles(): TFile[];
+    getFiles(): TFile[];
+    read(file: TFile): Promise<string>;
+    cachedRead(file: TFile): Promise<string>;
+    modify(file: TFile, content: string): Promise<void>;
+    create(path: string, content: string): Promise<TFile>;
+    createFolder(path: string): Promise<TFolder>;
+    /** `force` false honours the user's "deleted files" setting, so this trashes. */
+    delete(file: TFile, force?: boolean): Promise<void>;
+  }
+
+  export class Workspace {
+    getActiveFile(): TFile | null;
+    /** Opens a note by the same `[[link]]` text Obsidian resolves, `sourcePath` being where the link is written. */
+    openLinkText(linktext: string, sourcePath: string, newLeaf?: boolean): Promise<void>;
+  }
+
+  export class App {
+    vault: Vault;
+    workspace: Workspace;
+    secretStorage?: SecretStorage;
+  }
+
+  export class Component {
+    app: App;
+  }
+
+  export class Plugin {
+    app: App;
+    addCommand(command: { id: string; name: string; callback: () => void | Promise<void> }): void;
+    addSettingTab(tab: PluginSettingTab): void;
+    addRibbonIcon(icon: string, title: string, callback: () => void | Promise<void>): HTMLElement;
+    loadData(): Promise<unknown>;
+    saveData(data: unknown): Promise<void>;
+    setSecret?(id: string, secret: string): Promise<void>;
+    getSecret?(id: string): Promise<string | null>;
+  }
+
+  export class PluginSettingTab extends Component {
+    constructor(app: App, plugin: Plugin);
+    containerEl: HTMLElement;
+    display(): void;
+  }
+
+  export class Setting {
+    constructor(containerEl: HTMLElement);
+    setName(name: string): this;
+    setDesc(desc: string): this;
+    setHeading(): this;
+    addToggle(cb: (c: ToggleComponent) => unknown): this;
+    addText(cb: (c: TextComponent) => unknown): this;
+    addTextArea(cb: (c: TextAreaComponent) => unknown): this;
+    addDropdown(cb: (c: DropdownComponent) => unknown): this;
+    addButton(cb: (c: ButtonComponent) => unknown): this;
+  }
+
+  export class ToggleComponent {
+    setValue(value: boolean): this;
+    onChange(cb: (value: boolean) => void | Promise<void>): this;
+  }
+
+  export class TextComponent {
+    inputEl: HTMLInputElement;
+    setValue(value: string): this;
+    setPlaceholder(text: string): this;
+    onChange(cb: (value: string) => void | Promise<void>): this;
+  }
+
+  export class TextAreaComponent {
+    inputEl: HTMLTextAreaElement;
+    setValue(value: string): this;
+    setPlaceholder(text: string): this;
+    onChange(cb: (value: string) => void | Promise<void>): this;
+  }
+
+  export class DropdownComponent {
+    addOption(value: string, display: string): this;
+    setValue(value: string): this;
+    onChange(cb: (value: string) => void | Promise<void>): this;
+  }
+
+  export class ButtonComponent {
+    setButtonText(text: string): this;
+    setCta(): this;
+    onClick(cb: () => void | Promise<void>): this;
+  }
+
+  export class Modal extends Component {
+    constructor(app: App);
+    contentEl: HTMLElement;
+    titleEl: HTMLElement;
+    onOpen(): void;
+    onClose(): void;
+    open(): void;
+    close(): void;
+  }
+
+  export class Notice {
+    constructor(message: string | DocumentFragment, timeout?: number);
+    setMessage(message: string | DocumentFragment): this;
+    hide(): void;
+  }
+
+  export function requestUrl(options: {
+    url: string;
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+    throw?: boolean;
+  }): Promise<{ status: number; json: any; text: string }>;
+
+  export function setIcon(parent: HTMLElement, iconId: string): void;
+
+  export class MarkdownRenderer {
+    static render(
+      app: App,
+      markdown: string,
+      el: HTMLElement,
+      sourcePath: string,
+      component: Component,
+    ): Promise<void>;
+  }
+}

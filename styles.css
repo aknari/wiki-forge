@@ -1,0 +1,203 @@
+.wf-progress-track {
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.wf-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--interactive-accent);
+  transition: width 0.15s ease;
+}
+
+.wf-progress-status {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.wf-query-textarea {
+  width: 100%;
+  min-height: 80px;
+  margin: 8px 0;
+}
+
+/* Ask and Save sit in one row, above the answer: the save button used to be the
+   last element of the panel and went unseen behind a long answer. */
+.wf-query-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The answer-saving button sits at the far end of the row: `Ask` starts the work
+   and is what a hand reaches for, so it stays where it always was. */
+.wf-query-actions .wf-query-save {
+  margin-left: auto;
+}
+
+.wf-query-result {
+  margin: 12px 0;
+}
+
+.wf-query-sources {
+  margin: 8px 0;
+}
+
+.wf-query-hint {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  margin: 4px 0 8px;
+}
+
+/* A citation from the answer's `Fuentes` list that no page answers to. Not an
+   error — the answer is still good — but the one thing about it the rendered
+   text cannot show, because the link looks like all the others. */
+.wf-query-warn {
+  font-size: 0.9em;
+  color: var(--text-warning);
+  margin: 4px 0 8px;
+}
+
+/* One suggestion: the note as a link, the way to ingest it, and — when there is
+   none — the reason, so a row without a button does not read as a bug. The
+   result line sits under its own note, not at the end of the list. */
+.wf-suggestion-block {
+  margin-bottom: 2px;
+}
+
+.wf-suggestion-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.wf-suggestion {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 2px 0;
+  color: var(--link-color);
+  font-size: 0.9em;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.wf-suggestion:hover {
+  text-decoration: underline;
+}
+
+.wf-suggestion-ingest {
+  flex: 0 0 auto;
+  font-size: 0.85em;
+}
+
+.wf-suggestion-why {
+  flex: 0 0 auto;
+  font-size: 0.8em;
+  color: var(--text-faint);
+}
+
+/* Which words of the question made this note a candidate. It is the difference
+   between "the plugin thinks this is relevant" and one you can check at a glance. */
+.wf-suggestion-terms {
+  font-size: 0.8em;
+  color: var(--text-faint);
+  padding-left: 2px;
+}
+
+.wf-suggestion-note,
+.wf-suggestion-error {
+  font-size: 0.8em;
+  margin: 0 0 4px 8px;
+  overflow-wrap: anywhere;
+}
+
+.wf-suggestion-note {
+  color: var(--text-faint);
+}
+
+.wf-suggestion-error {
+  color: var(--text-error);
+}
+
+/* ------------------------------------------------------------- wiki check */
+
+.wf-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.wf-report-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.wf-report-table td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A count of zero is the good news, so it is the quiet one. */
+.wf-report-table .wf-report-ok {
+  color: var(--text-faint);
+}
+
+.wf-report-table .wf-report-warn {
+  color: var(--text-error);
+  font-weight: 600;
+}
+
+.wf-report-note {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  border-left: 2px solid var(--background-modifier-border);
+  padding-left: 8px;
+}
+
+.wf-report-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.wf-fix-list {
+  max-height: 45vh;
+  overflow-y: auto;
+  margin: 8px 0;
+}
+
+.wf-fix-page {
+  margin-bottom: 10px;
+}
+
+.wf-fix-path {
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.wf-fix-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 1px 0 1px 12px;
+  font-size: 0.9em;
+}
+
+.wf-fix-kind {
+  flex: 0 0 4.5em;
+  text-align: right;
+  color: var(--text-faint);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

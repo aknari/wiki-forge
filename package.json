@@ -1,0 +1,16 @@
+{
+  "name": "wiki-forge",
+  "version": "0.9.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --external:obsidian --format=cjs --platform=browser --target=es2020 --outfile=dist/main.js && cp styles.css dist/",
+    "deploy": "npm run build && cp dist/main.js dist/styles.css manifest.json \"${OBSIDIAN_PLUGIN_DIR:-../../.obsidian/plugins/wiki-forge}/\"",
+    "typecheck": "tsc --noEmit",
+    "test": "esbuild test/paths.test.ts --bundle --platform=node --format=cjs --outfile=.test/paths.test.cjs && esbuild test/sources.test.ts --bundle --platform=node --format=cjs --outfile=.test/sources.test.cjs && esbuild test/models.test.ts --bundle --platform=node --format=cjs --outfile=.test/models.test.cjs && esbuild test/secrets.test.ts --bundle --platform=node --format=cjs --outfile=.test/secrets.test.cjs && esbuild test/wikitext.test.ts --bundle --platform=node --format=cjs --outfile=.test/wikitext.test.cjs && esbuild test/wiki-check.test.ts --bundle --platform=node --format=cjs --outfile=.test/wiki-check.test.cjs && esbuild test/query-note.test.ts --bundle --platform=node --format=cjs --outfile=.test/query-note.test.cjs && esbuild test/llm-errors.test.ts --bundle --platform=node --format=cjs --outfile=.test/llm-errors.test.cjs && esbuild test/endpoints.test.ts --bundle --platform=node --format=cjs --outfile=.test/endpoints.test.cjs && esbuild test/suggestions.test.ts --bundle --platform=node --format=cjs --outfile=.test/suggestions.test.cjs && esbuild test/protocol.test.ts --bundle --platform=node --format=cjs --outfile=.test/protocol.test.cjs && esbuild test/sampling.test.ts --bundle --platform=node --format=cjs --outfile=.test/sampling.test.cjs && node .test/secrets.test.cjs && node .test/paths.test.cjs && node .test/sources.test.cjs && node .test/models.test.cjs && node .test/wikitext.test.cjs && node .test/wiki-check.test.cjs && node .test/query-note.test.cjs && node .test/llm-errors.test.cjs && node .test/endpoints.test.cjs && node .test/suggestions.test.cjs && node .test/protocol.test.cjs && node .test/sampling.test.cjs && esbuild test/answer-sources.test.ts --bundle --platform=node --format=cjs --outfile=.test/answer-sources.test.cjs && node .test/answer-sources.test.cjs && esbuild test/prompts.test.ts --bundle --platform=node --format=cjs --outfile=.test/prompts.test.cjs && node .test/prompts.test.cjs && esbuild test/wiki-reset.test.ts --bundle --platform=node --format=cjs --outfile=.test/wiki-reset.test.cjs && node .test/wiki-reset.test.cjs && esbuild test/search.test.ts --bundle --platform=node --format=cjs --outfile=.test/search.test.cjs && node .test/search.test.cjs && esbuild test/page-change.test.ts --bundle --platform=node --format=cjs --outfile=.test/page-change.test.cjs && node .test/page-change.test.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "wiki-forge",
+  "name": "WikiForge",
+  "version": "0.9.0",
+  "minAppVersion": "1.11.4",
+  "description": "Distil your raw notes into an interconnected wiki and query it with any LLM (Google Gemini, OpenRouter, LM Studio, Ollama...).",
+  "author": "T. Bautista",
+  "isDesktopOnly": false
+}
