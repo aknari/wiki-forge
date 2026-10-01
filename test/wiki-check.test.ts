@@ -199,6 +199,133 @@ const traced = checkWiki({
 });
 check('a source written as a bracketed path resolves', traced.untraceable, []);
 
+// --------------------------------------------------------- missing cross-refs
+// The wiki-check fixture is too small to exercise the detection: three pages
+// and a handful of name words. This miniature is built for it.
+const mini = [
+  {
+    path: 'index.md',
+    content: '# i\n',
+  },
+  {
+    path: '01-lisa/modelo-lisa.md',
+    content: [
+      '---',
+      'fuentes: ["[[00 - Lisa]]"]',
+      '---',
+      '# Modelo Lisa',
+      '',
+      'Vuelve a [[pipeline-de-datos]].',
+    ].join('\n'),
+  },
+  {
+    path: '01-lisa/pipeline-de-datos.md',
+    content: [
+      '---',
+      'fuentes: ["[[modelo-lisa]]"]',
+      '---',
+      '# Pipeline de datos',
+      '',
+      'Todo el pipeline pasa por Lisa, la prueba de Lisa también,',
+      'y la interfaz de Lisa cierra el bucle. Lisa arriba, Lisa abajo.',
+    ].join('\n'),
+  },
+  {
+    path: '01-lisa/plasma-en-lisa.md',
+    content: '# Plasma en Lisa\n\nLisa aquí.\n',
+  },
+  {
+    path: '02-plasma/sbbclock.md',
+    content: [
+      '---',
+      'fuentes: ["[[00 - Lisa]]"]',
+      '---',
+      '# sbbclock',
+      '',
+      'El pipeline de datos entra en el reloj; el pipeline de datos lo mide;',
+      'y el pipeline de datos cierra el ciclo. Pipeline, pipeline, pipeline.',
+    ].join('\n'),
+  },
+];
+const found = checkWiki({
+  pages: mini,
+  knownTitles: ['index', 'modelo-lisa', 'pipeline-de-datos', 'sbbclock', '00 - Lisa'],
+});
+
+check(
+  'a page naming another subject without linking it is suggested',
+  found.missingLinks,
+  [{ from: '02-plasma/sbbclock.md', to: '01-lisa/pipeline-de-datos.md', term: 'pipeline', mentions: 4 }],
+);
+check(
+  'the same wiki, measured for nothing else, is unchanged',
+  [found.brokenLinks.length, found.orphans.length, found.pages],
+  [0, 2, 4],
+);
+
+const linked = checkWiki({
+  pages: [
+    { path: 'index.md', content: '# i\n' },
+    { path: 'a/capacitor.md', content: '# Capacitor\n\nnota\n' },
+    {
+      path: 'b/tuner.md',
+      content: '# Tuner\n\nEl capacitor aparece, el capacitor manda, el capacitor cierra.\n',
+    },
+  ],
+  knownTitles: ['index', 'capacitor', 'tuner'],
+});
+check('without a link the suggestion stands', linked.missingLinks.length, 1);
+
+const nowLinked = checkWiki({
+  pages: [
+    { path: 'index.md', content: '# i\n' },
+    { path: 'a/capacitor.md', content: '# Capacitor\n\nnota\n' },
+    {
+      path: 'b/tuner.md',
+      content: '# Tuner\n\nEl [[capacitor]] aparece, el capacitor manda, el capacitor cierra.\n',
+    },
+  ],
+  knownTitles: ['index', 'capacitor', 'tuner'],
+});
+check('a link already carried suppresses the suggestion', nowLinked.missingLinks, []);
+
+const sharedWord = checkWiki({
+  pages: [
+    { path: 'index.md', content: '# i\n' },
+    { path: 'a/pipeline-data.md', content: '# Pipeline data\n\nnota\n' },
+    { path: 'a/pipeline-view.md', content: '# Pipeline view\n\nnota\n' },
+    {
+      path: 'b/tuner.md',
+      content: '# Tuner\n\nEl pipeline aparece, el pipeline manda, el pipeline cierra.\n',
+    },
+  ],
+  knownTitles: ['index', 'pipeline-data', 'pipeline-view', 'tuner'],
+});
+check('a word two pages share is nobody\'s subject', sharedWord.missingLinks, []);
+
+const declaredSource = checkWiki({
+  pages: [
+    { path: 'index.md', content: '# i\n' },
+    { path: 'a/capacitor.md', content: '# Capacitor\n\nnota\n' },
+    {
+      path: 'b/tuner.md',
+      content: '---\nfuentes: ["[[capacitor]]"]\n---\n# Tuner\n\nEl capacitor aparece, el capacitor manda, el capacitor cierra.\n',
+    },
+  ],
+  knownTitles: ['index', 'capacitor', 'tuner'],
+});
+check('the normal fuentes pattern is not a missing link', declaredSource.missingLinks, []);
+
+const fewMentions = checkWiki({
+  pages: [
+    { path: 'index.md', content: '# i\n' },
+    { path: 'a/capacitor.md', content: '# Capacitor\n\nnota\n' },
+    { path: 'b/tuner.md', content: '# Tuner\n\nEl capacitor aparece una vez y el capacitor se va.\n' },
+  ],
+  knownTitles: ['index', 'capacitor', 'tuner'],
+});
+check('two mentions are not enough', fewMentions.missingLinks, []);
+
 if (failed > 0) {
   console.error(`\n${failed} wiki check test(s) failed.`);
   process.exit(1);

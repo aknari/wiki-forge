@@ -31,9 +31,10 @@
  * Written already folded (no accents), because that is what they are compared
  * against. The list is deliberately short: a term that is merely common costs a
  * little noise, whereas dropping a real term silently hides a note — and the
- * second failure is the one this module exists to remove.
+ * second failure is the one this module exists to remove. Exported because the
+ * wiki check reuses it to keep a page's name-words from being read as subjects.
  */
-const STOPWORDS = new Set([
+export const STOPWORDS = new Set([
   // Spanish
   'que', 'cual', 'cuales', 'como', 'donde', 'quien', 'quienes', 'cuando', 'cuanto', 'cuanta',
   'los', 'las', 'del', 'una', 'uno', 'unos', 'unas', 'por', 'para', 'con', 'sin', 'sobre',

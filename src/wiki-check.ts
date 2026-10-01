@@ -16,6 +16,12 @@
  * - An orphan is a page no *other page* links to. The index is left out of that
  *   count on purpose: the index is generated from the folder, so it lists
  *   everything and would hide every orphan there is.
+ * - A missing cross-reference is a page that talks *about* another page without
+ *   linking to it: it names the other page's subject often enough in its own
+ *   prose, carries no link of any spelling to it, and the pair is not the
+ *   ordinary parent-and-child pattern (a page always names its own sources).
+ *   This is the one finding here that is a suggestion rather than a fault —
+ *   spelled out in the report, applied by no automatic step.
  */
 import {
   closestTitle,
@@ -27,6 +33,7 @@ import {
   wikilinkTargets,
   type Artifact,
 } from './wikitext';
+import { fold, STOPWORDS } from './search';
 
 export interface WikiPage {
   /** Path relative to the wiki folder, e.g. `01-lisa/modelo-lisa.md`. */
@@ -59,6 +66,25 @@ export interface BrokenLink {
   suggestion: string | null;
 }
 
+/**
+ * A page that should probably link to another and does not.
+ *
+ * `mentions` counts the word starts of the subject in the *body prose* —
+ * frontmatter, headings and fenced code do not count. Repeats stop counting at
+ * `mentionCap`, so the number on screen means *present, several times*, not a
+ * contest of volume.
+ */
+export interface MissingLink {
+  /** The page holding the prose. */
+  from: string;
+  /** The page that should be linked, path inside the wiki. */
+  to: string;
+  /** The subject word the detection matched on (already folded). */
+  term: string;
+  /** Word starts of the term in the prose, capped. */
+  mentions: number;
+}
+
 export interface WikiReport {
   pages: number;
   links: number;
@@ -74,6 +100,11 @@ export interface WikiReport {
   artifacts: Array<{ path: string; artifact: Artifact }>;
   /** Pages whose `fuentes` is empty or names nothing that exists. */
   untraceable: string[];
+  /**
+   * Pages that name another page's subject again and again without linking to
+   * it. Suggestions, not faults: the decision to link belongs to you.
+   */
+  missingLinks: MissingLink[];
   /** How many of the problems above the mechanical cleaner can settle. */
   fixableLinks: number;
   fixableArtifacts: number;
@@ -160,6 +191,12 @@ export function checkWiki(input: WikiCheckInput): WikiReport {
     .map(page => page.path)
     .sort();
 
+  // --- missing cross-references --------------------------------------------
+  // A page that keeps naming another page's subject without linking to it. The
+  // decision to link belongs to the author; this only says where one is
+  // probably missing, so it is a suggestion and lives apart from the faults.
+  const missingLinks = findMissingLinks(entries, sourcesKey);
+
   const artifacts: Array<{ path: string; artifact: Artifact }> = [];
   for (const page of input.pages) {
     for (const artifact of detectArtifacts(page.content)) artifacts.push({ path: page.path, artifact });
@@ -187,9 +224,145 @@ export function checkWiki(input: WikiCheckInput): WikiReport {
     orphans,
     artifacts,
     untraceable,
+    missingLinks,
     fixableLinks: brokenLinks.filter(link => link.suggestion !== null).length,
     fixableArtifacts: artifacts.filter(item => item.artifact.fixable).length,
   };
+}
+
+const isWordChar = (char: string): boolean => /[\p{L}\p{N}]/u.test(char);
+
+/**
+ * Fenced code and headings are furniture, not speech: neither counts as prose.
+ * A fence holds code or quoted metadata, and a heading names things
+ * structurally — the same page always titles its own sections.
+ */
+function stripFences(text: string): string {
+  return text.replace(/```[\s\S]*?```/g, ' ');
+}
+
+function stripHeadings(text: string): string {
+  return text.replace(/^#{1,6}\s+.*$/gm, ' ');
+}
+
+/**
+ * The word starts of `term` in `prose`, counted no further than `cap`.
+ *
+ * `term` arrives already folded and `prose` is folded by the caller; counting
+ * word starts keeps `lisa` away from `analisa` the same way the source search
+ * does. The cap exists so the displayed count means *present, several times*
+ * instead of rewarding the page that repeats the word most.
+ */
+function cappedWordStarts(prose: string, term: string, cap: number): number {
+  let count = 0;
+  let from = 0;
+  for (;;) {
+    const at = prose.indexOf(term, from);
+    if (at === -1) return count;
+    const before = prose[at - 1];
+    if ((before === undefined || !isWordChar(before)) && count < cap) count++;
+    from = at + 1;
+  }
+}
+
+/** Distinct word starts a page needs before a link is suggested. */
+const MIN_MENTIONS = 3;
+/** Repeats stop counting here; the count is a presence, not a volume. */
+const MENTION_CAP = 4;
+
+/**
+ * Cross-references that are probably missing: pages that name another page's
+ * subject again and again without linking to it.
+ *
+ * The detection is deliberately narrow, because every relaxation would be paid
+ * in false suggestions:
+ *
+ * - **The subject is a word of the page's own name.** A page is suggested when
+ *   one of its name's words appears as word starts in the prose of another
+ *   page. The word must be four letters or more, carry a letter, and be no
+ *   stopword — and it must belong to this page alone: when three pages are
+ *   named `lisa-*`, the word `lisa` is nobody's subject, because a suggestion
+ *   could not say which page it means.
+ * - **In the prose, not the furniture.** Frontmatter, headings and fenced code
+ *   are stripped first: `fuentes:` and `## Modelo Lisa` name things
+ *   structurally, and a fence is code or quoted metadata, not speech.
+ * - **Often enough.** At least `MIN_MENTIONS` word starts, repeats capped at
+ *   `MENTION_CAP`.
+ * - **No link of any spelling.** The candidate words are checked against the
+ *   links the page already carries: `[[modelo-lisa]]`,
+ *   `[[01-lisa/modelo-lisa]]` and `[[Modelo Lisa]]` all count as linked.
+ * - **Not the ordinary parent-and-child pattern.** A page always names its own
+ *   sources in `fuentes`, and the notes distilled into it name the page they
+ *   wrote; both directions are the normal shape of the wiki, so a pair whose
+ *   target sits in the source's own `fuentes` is skipped.
+ *
+ * The strongest suggestions come first; ties break by page and then target, so
+ * the report is stable across runs.
+ */
+export function findMissingLinks(entries: readonly WikiPage[], sourcesKey = 'fuentes'): MissingLink[] {
+  // The folded words of each page's name worth matching on, and how many pages
+  // claim each one. A word two pages share cannot be a subject.
+  const candidatesOf = new Map<string, string[]>();
+  const owners = new Map<string, number>();
+  for (const page of entries) {
+    const name = page.path.split('/').pop() ?? page.path;
+    const words = [...new Set(fold(name.replace(/\.md$/i, '')).split(/[^\p{L}\p{N}]+/u))].filter(
+      word => word.length >= 4 && /[\p{L}]/u.test(word) && !STOPWORDS.has(word),
+    );
+    candidatesOf.set(page.path, words);
+    for (const word of words) owners.set(word, (owners.get(word) ?? 0) + 1);
+  }
+  const uniqueTermsOf = new Map<string, string[]>();
+  for (const [path, words] of candidatesOf) {
+    uniqueTermsOf.set(path, words.filter(word => owners.get(word) === 1));
+  }
+
+  const proseOf = new Map<string, string>();
+  for (const page of entries) {
+    const split = splitFrontmatter(page.content);
+    proseOf.set(page.path, stripFences(stripHeadings(split.body)));
+  }
+
+  const out: MissingLink[] = [];
+  for (const from of entries) {
+    const fromKey = titleKey(from.path.split('/').pop() ?? from.path);
+    const fromSplit = splitFrontmatter(from.content);
+    const declared = frontmatterList(fromSplit, sourcesKey)
+      .map(linkTarget)
+      .map(target => titleKey(target.split('/').pop() ?? target));
+    const carried = wikilinkTargets(from.content)
+      .map(target => titleKey(target.split('/').pop() ?? target));
+    const prose = proseOf.get(from.path) ?? '';
+
+    for (const to of entries) {
+      const toKey = titleKey(to.path.split('/').pop() ?? to.path);
+      if (toKey === fromKey) continue;
+      if (declared.includes(toKey)) continue;
+      const terms = uniqueTermsOf.get(to.path) ?? [];
+      if (terms.length === 0) continue;
+      // Any spelling of the target already carried counts as linked.
+      if (carried.some(key => terms.some(term => key.includes(term)))) continue;
+
+      let best: { term: string; mentions: number } | null = null;
+      for (const term of terms) {
+        const mentions = cappedWordStarts(prose, term, MENTION_CAP);
+        if (mentions < MIN_MENTIONS) continue;
+        if (
+          best === null ||
+          mentions > best.mentions ||
+          (mentions === best.mentions &&
+            (term.length > best.term.length || (term.length === best.term.length && term < best.term)))
+        ) {
+          best = { term, mentions };
+        }
+      }
+      if (best === null) continue;
+      out.push({ from: from.path, to: to.path, term: best.term, mentions: best.mentions });
+    }
+  }
+  return out.sort(
+    (a, b) => b.mentions - a.mentions || a.from.localeCompare(b.from) || a.to.localeCompare(b.to),
+  );
 }
 
 export interface ReportMeta {
@@ -224,6 +397,7 @@ export function renderWikiReport(report: WikiReport, meta: ReportMeta): string {
   lines.push(`| Orphan pages (no link from another page) | ${report.orphans.length} |`);
   lines.push(`| Leftover blocks / markers | ${report.artifacts.length} |`);
   lines.push(`| Pages with a source that does not resolve | ${report.untraceable.length} |`);
+  lines.push(`| Missing cross-references (suggested) | ${report.missingLinks.length} |`);
   lines.push(`| Mechanical fixes available | ${fixes} |`);
   lines.push('');
 
@@ -254,6 +428,21 @@ export function renderWikiReport(report: WikiReport, meta: ReportMeta): string {
   list('Index entries pointing outside the wiki', report.foreignIndexEntries);
   list('Orphan pages', report.orphans);
   list('Pages with a source that does not resolve', report.untraceable);
+
+  lines.push(`## Missing cross-references (${report.missingLinks.length})`);
+  lines.push('');
+  if (report.missingLinks.length === 0) {
+    lines.push('_None._');
+  } else {
+    lines.push('A page naming another page\'s subject again and again without linking to it. A suggestion, not a fault: nothing is linked automatically.');
+    lines.push('');
+    lines.push('| Page | Probably links to | Mentions |');
+    lines.push('| --- | --- | --- |');
+    for (const link of report.missingLinks) {
+      lines.push(`| \`${link.from}\` | \`${link.to}\` | ${link.mentions} × «${link.term}» |`);
+    }
+  }
+  lines.push('');
 
   lines.push(`## Leftovers (${report.artifacts.length})`);
   lines.push('');
