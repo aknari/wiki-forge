@@ -128,6 +128,8 @@ for (const row of [
   check(`the report carries "${row}"`, rendered.includes(row), true);
 }
 check('the report names the suggestion', rendered.includes('`metodologia-verificacion`'), true);
+check('the report counts the strong suggestions', rendered.includes('| Missing cross-references (suggested) | 0 |'), true);
+check('the report counts the weak evidence', rendered.includes('| Weak evidence (2 mentions) | 0 |'), true);
 check('the report says where it was written', rendered.includes('80-support/wiki-forge/informe.md'), true);
 
 // ------------------------------------------------------------------- the index
@@ -324,7 +326,34 @@ const fewMentions = checkWiki({
   ],
   knownTitles: ['index', 'capacitor', 'tuner'],
 });
-check('two mentions are not enough', fewMentions.missingLinks, []);
+check('two mentions do not reach the strong tier', fewMentions.missingLinks, []);
+check(
+  'and they are offered as weak evidence',
+  fewMentions.weakMissingLinks,
+  [{ from: 'b/tuner.md', to: 'a/capacitor.md', term: 'capacitor', mentions: 2 }],
+);
+
+// The weak tier is capped so a large wiki still reads its report at a glance.
+// Each subject has to be a word only its own page claims, hence one distinct
+// word per page — and more than ten of them, to see the cap bite.
+const letters = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'theta', 'iota', 'kappa', 'lambda', 'omicron'];
+const weakTier = checkWiki({
+  pages: [
+    { path: 'index.md', content: '# i\n' },
+    ...letters.map(letter => ({
+      path: `a/${letter}-part.md`,
+      content: `# ${letter} part\n\nnota\n`,
+    })),
+    {
+      path: 'b/tuner.md',
+      content: `# Tuner\n\n${letters.map(letter => `The ${letter} part hums, the ${letter} part sings.`).join(' ')}\n`,
+    },
+  ],
+  knownTitles: ['index', 'tuner', ...letters.map(letter => `${letter}-part`)],
+});
+check('nothing weak is strong', weakTier.missingLinks, []);
+check('the weak tier is capped at ten rows', weakTier.weakMissingLinks.length, 10);
+check('the cap keeps the first rows in report order', weakTier.weakMissingLinks[9]?.to, 'a/theta-part.md');
 
 if (failed > 0) {
   console.error(`\n${failed} wiki check test(s) failed.`);

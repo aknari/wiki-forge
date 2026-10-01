@@ -102,9 +102,15 @@ export interface WikiReport {
   untraceable: string[];
   /**
    * Pages that name another page's subject again and again without linking to
-   * it. Suggestions, not faults: the decision to link belongs to you.
+   * it. Suggestions, not faults: the decision to link belongs to you. The
+   * strong tier; the weaker evidence sits in `weakMissingLinks`.
    */
   missingLinks: MissingLink[];
+  /**
+   * The pairs one mention short of the strong tier (exactly the minimum). Shown
+   * apart and capped, so a large wiki still reads its report at a glance.
+   */
+  weakMissingLinks: MissingLink[];
   /** How many of the problems above the mechanical cleaner can settle. */
   fixableLinks: number;
   fixableArtifacts: number;
@@ -196,6 +202,12 @@ export function checkWiki(input: WikiCheckInput): WikiReport {
   // decision to link belongs to the author; this only says where one is
   // probably missing, so it is a suggestion and lives apart from the faults.
   const missingLinks = findMissingLinks(entries, sourcesKey);
+  // The weak tier is the pairs exactly one mention short of the strong one, so
+  // it takes its own pass at the lower minimum; `findMissingLinks` itself keeps
+  // its published semantics (strong tier only).
+  const weakMissingLinks = findMissingLinks(entries, sourcesKey, MIN_MENTIONS - 1)
+    .filter(link => link.mentions === MIN_MENTIONS - 1)
+    .slice(0, WEAK_LIMIT);
 
   const artifacts: Array<{ path: string; artifact: Artifact }> = [];
   for (const page of input.pages) {
@@ -225,6 +237,7 @@ export function checkWiki(input: WikiCheckInput): WikiReport {
     artifacts,
     untraceable,
     missingLinks,
+    weakMissingLinks,
     fixableLinks: brokenLinks.filter(link => link.suggestion !== null).length,
     fixableArtifacts: artifacts.filter(item => item.artifact.fixable).length,
   };
@@ -267,6 +280,12 @@ function cappedWordStarts(prose: string, term: string, cap: number): number {
 
 /** Distinct word starts a page needs before a link is suggested. */
 const MIN_MENTIONS = 3;
+/**
+ * How many weak rows the report shows. The weak tier keeps the silence problem
+ * away — the reader is never left wondering whether the detector is mute or
+ * merely not confident — without promoting a two-mention pair to a suggestion.
+ */
+const WEAK_LIMIT = 10;
 /** Repeats stop counting here; the count is a presence, not a volume. */
 const MENTION_CAP = 4;
 
@@ -299,7 +318,11 @@ const MENTION_CAP = 4;
  * The strongest suggestions come first; ties break by page and then target, so
  * the report is stable across runs.
  */
-export function findMissingLinks(entries: readonly WikiPage[], sourcesKey = 'fuentes'): MissingLink[] {
+export function findMissingLinks(
+  entries: readonly WikiPage[],
+  sourcesKey = 'fuentes',
+  minMentions: number = MIN_MENTIONS,
+): MissingLink[] {
   // The folded words of each page's name worth matching on, and how many pages
   // claim each one. A word two pages share cannot be a subject.
   const candidatesOf = new Map<string, string[]>();
@@ -346,7 +369,7 @@ export function findMissingLinks(entries: readonly WikiPage[], sourcesKey = 'fue
       let best: { term: string; mentions: number } | null = null;
       for (const term of terms) {
         const mentions = cappedWordStarts(prose, term, MENTION_CAP);
-        if (mentions < MIN_MENTIONS) continue;
+        if (mentions < minMentions) continue;
         if (
           best === null ||
           mentions > best.mentions ||
@@ -398,6 +421,7 @@ export function renderWikiReport(report: WikiReport, meta: ReportMeta): string {
   lines.push(`| Leftover blocks / markers | ${report.artifacts.length} |`);
   lines.push(`| Pages with a source that does not resolve | ${report.untraceable.length} |`);
   lines.push(`| Missing cross-references (suggested) | ${report.missingLinks.length} |`);
+  lines.push(`| Weak evidence (2 mentions) | ${report.weakMissingLinks.length} |`);
   lines.push(`| Mechanical fixes available | ${fixes} |`);
   lines.push('');
 
@@ -439,6 +463,21 @@ export function renderWikiReport(report: WikiReport, meta: ReportMeta): string {
     lines.push('| Page | Probably links to | Mentions |');
     lines.push('| --- | --- | --- |');
     for (const link of report.missingLinks) {
+      lines.push(`| \`${link.from}\` | \`${link.to}\` | ${link.mentions} × «${link.term}» |`);
+    }
+  }
+  lines.push('');
+
+  lines.push(`## Weak evidence (2 mentions) (${report.weakMissingLinks.length})`);
+  lines.push('');
+  if (report.weakMissingLinks.length === 0) {
+    lines.push('_None. A pair mentioned twice belongs here, not among the suggestions above._');
+  } else {
+    lines.push(`One mention short of the suggestions above, shown here capped at ${WEAK_LIMIT} rows. A pair that shows up check after check is worth a look; a pair that appears once usually is not.`);
+    lines.push('');
+    lines.push('| Page | Probably links to | Mentions |');
+    lines.push('| --- | --- | --- |');
+    for (const link of report.weakMissingLinks) {
       lines.push(`| \`${link.from}\` | \`${link.to}\` | ${link.mentions} × «${link.term}» |`);
     }
   }
