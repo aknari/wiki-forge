@@ -61,7 +61,7 @@ export function wikiPagePaths(app: App, settings: WikiForgeSettings): string[] {
 
 /**
  * The map the prompts carry: the index, which lists every page with its title
- * and `tipo`, or the bare paths before an index exists. Tens of bytes per page,
+ * and `type`, or the bare paths before an index exists. Tens of bytes per page,
  * so it is always affordable — unlike the whole wiki, which is not.
  */
 async function readWikiMap(app: App, settings: WikiForgeSettings): Promise<string> {
@@ -231,7 +231,7 @@ export interface WrittenPage {
  * here, at the single door every page goes through, rather than asked for in the
  * prompt — the fence is the model reformatting **its own text**, which it does
  * faithfully, fence included (measured: three pages of `04-lisa` were written
- * that way and the wiki could not see their `tipo`).
+ * that way and the wiki could not see their `type`).
  */
 export async function processOutput(
   app: App,

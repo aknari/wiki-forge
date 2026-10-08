@@ -31,7 +31,7 @@ function check(description: string, actual: unknown, expected: unknown): void {
 // ------------------------------------------------------------------- splitting
 check(
   'the frontmatter is not a statement',
-  statementsOf('---\ntipo: concepto\nupdated: 2026-09-17T23:37\n---\n# Título\n\nEl modelo Lisa es un procesador.\n'),
+  statementsOf('---\ntype: concept\nupdated: 2026-09-17T23:37\n---\n# Título\n\nEl modelo Lisa es un procesador.\n'),
   ['El modelo Lisa es un procesador.'],
 );
 check(

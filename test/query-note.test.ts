@@ -67,11 +67,11 @@ check('the title is the question itself', firstHeading(split.body), question);
 check('so the index does not list it as a bare "Question"', firstHeading(split.body) === 'Question', false);
 check('no leftover "## Question" heading survives', note.includes('## Question'), false);
 check(
-  'the sources are declared in fuentes, the key the wiki uses',
-  frontmatterList(split, 'fuentes'),
+  'the sources are declared in sources, the key the wiki uses',
+  frontmatterList(split, 'sources'),
   ['[[20-wiki/01-lisa/capa-de-acceso-a-memoria]]'],
 );
-check('and nothing is left in sources, which the check never reads', frontmatterList(split, 'sources'), []);
+check('and nothing is left under the old Spanish key', frontmatterList(split, 'fuentes'), []);
 check('the question is in the frontmatter as well', split.keys['question'], `"${question}"`);
 check('with an ISO date', split.keys['date'], when.toISOString());
 check('the answer is trimmed into its section', /## Answer\n\nPor capas, con una caché de dos niveles\./.test(note), true);
@@ -148,7 +148,7 @@ const indexText = [
   '',
   '## 04-lisa — 3',
   '',
-  '- [[lisa-architecture-overview|Arquitectura de Lisa]] — `concepto`',
+  '- [[lisa-architecture-overview|Arquitectura de Lisa]] — `concept`',
   '',
   '## queries — 1',
   '',
@@ -199,13 +199,13 @@ check(
   '"dijo \\"hola\\""',
 );
 check(
-  'an answer that read no page declares an empty fuentes list',
-  renderAnswerNote('q', 'a', [], when).includes('fuentes: []'),
+  'an answer that read no page declares an empty sources list',
+  renderAnswerNote('q', 'a', [], when).includes('sources: []'),
   true,
 );
 check(
   'several sources are listed in order',
-  frontmatterList(splitFrontmatter(renderAnswerNote('q', 'a', ['20-wiki/a.md', '20-wiki/b.md'], when)), 'fuentes'),
+  frontmatterList(splitFrontmatter(renderAnswerNote('q', 'a', ['20-wiki/a.md', '20-wiki/b.md'], when)), 'sources'),
   ['[[20-wiki/a]]', '[[20-wiki/b]]'],
 );
 

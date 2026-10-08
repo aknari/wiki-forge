@@ -34,7 +34,7 @@ export interface IndexOptions {
   logName: string;
   /** ISO timestamp, written to the frontmatter. */
   generatedAt: string;
-  /** Frontmatter key holding the entity type. Default: `tipo`. */
+  /** Frontmatter key holding the entity type. Default: `type`. */
   typeKey?: string;
 }
 
@@ -51,7 +51,7 @@ function displayTitle(path: string, content: string): string {
  * the pages sitting directly in the wiki folder last.
  */
 export function buildWikiIndex(entries: IndexEntry[], options: IndexOptions): string {
-  const typeKey = options.typeKey ?? 'tipo';
+  const typeKey = options.typeKey ?? 'type';
   const groups = new Map<string, IndexEntry[]>();
   for (const entry of entries) {
     const parts = entry.path.split('/');
@@ -68,16 +68,16 @@ export function buildWikiIndex(entries: IndexEntry[], options: IndexOptions): st
   lines.push(`generated: ${options.generatedAt}`);
   lines.push('generated_by: WikiForge — rebuilt from the wiki folder');
   lines.push('---');
-  lines.push('# Índice de Conocimiento');
+  lines.push('# Knowledge Index');
   lines.push('');
   lines.push(
-    `<!-- Reconstruido por WikiForge a partir de los ficheros de \`${options.wikiDir}\`. ` +
-      'Cualquier edición manual se pierde en la siguiente reconstrucción. -->',
+    `<!-- Rebuilt by WikiForge from the files under \`${options.wikiDir}\`. ` +
+      'Any manual edit is lost on the next rebuild. -->',
   );
   lines.push('');
 
   if (entries.length === 0) {
-    lines.push('_La wiki está vacía: todavía no se ha destilado ninguna nota._');
+    lines.push('_The wiki is empty: no note has been distilled yet._');
     return `${lines.join('\n')}\n`;
   }
 
@@ -86,7 +86,7 @@ export function buildWikiIndex(entries: IndexEntry[], options: IndexOptions): st
       .slice()
       .sort((a, b) => displayTitle(a.path, a.content).localeCompare(displayTitle(b.path, b.content)));
     if (items.length === 0) continue;
-    lines.push(`## ${folder === '' ? '(raíz)' : folder} — ${items.length}`);
+    lines.push(`## ${folder === '' ? '(root)' : folder} — ${items.length}`);
     lines.push('');
     for (const entry of items) {
       const base = entry.path.split('/').pop() ?? entry.path;

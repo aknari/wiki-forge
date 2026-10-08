@@ -1,6 +1,6 @@
 {
   "name": "wiki-forge",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "private": true,
   "scripts": {
     "build": "esbuild src/main.ts --bundle --external:obsidian --format=cjs --platform=browser --target=es2020 --outfile=dist/main.js && cp styles.css dist/",

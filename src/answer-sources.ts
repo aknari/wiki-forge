@@ -72,14 +72,16 @@ const withoutExtension = (value: string): string => value.replace(/\.md$/iu, '')
 const baseName = (path: string): string => path.split('/').pop() ?? path;
 
 /**
- * Whether the line is the label the source list hangs from: `Fuentes`,
- * `## Fuentes`, `**Sources:**`. Written as a plain comparison rather than a
+ * Whether the line is the label the source list hangs from: `Sources`,
+ * `## Sources`, `**Sources:**`. Written as a plain comparison rather than a
  * pattern so a line of prose that merely mentions the word is not mistaken for
- * the heading that opens the list.
+ * the heading that opens the list. The legacy Spanish label `Fuentes` is still
+ * accepted, because the model writes the closing section in the language of the
+ * sources.
  */
 function isSourceLabel(line: string): boolean {
   const text = line.replace(/[#*_>`\s:]/gu, '').toLowerCase();
-  return text === 'fuentes' || text === 'sources';
+  return text === 'sources' || text === 'fuentes';
 }
 
 /**

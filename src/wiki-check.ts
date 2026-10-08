@@ -8,7 +8,7 @@
  *
  * Two definitions are worth stating, because they are choices:
  *
- * - Links are read from the whole file, frontmatter included: `fuentes:` holds
+ * - Links are read from the whole file, frontmatter included: `sources:` holds
  *   real links, and a source that does not resolve is a real problem.
  * - A link counts as resolved when its target matches the name *or* the path of
  *   some note in the vault (that is how Obsidian resolves it), and a link to a
@@ -50,7 +50,7 @@ export interface WikiCheckInput {
    * written either way is understood.
    */
   knownTitles: string[];
-  /** Frontmatter key holding the sources of a page. Default: `fuentes`. */
+  /** Frontmatter key holding the sources of a page. Default: `sources`. */
   sourcesKey?: string;
   indexName?: string;
   logName?: string;
@@ -98,7 +98,7 @@ export interface WikiReport {
   /** Pages no other page links to (the index does not count). */
   orphans: string[];
   artifacts: Array<{ path: string; artifact: Artifact }>;
-  /** Pages whose `fuentes` is empty or names nothing that exists. */
+  /** Pages whose `sources` is empty or names nothing that exists. */
   untraceable: string[];
   /**
    * Pages that name another page's subject again and again without linking to
@@ -119,7 +119,7 @@ export interface WikiReport {
 export function checkWiki(input: WikiCheckInput): WikiReport {
   const indexName = input.indexName ?? 'index.md';
   const logName = input.logName ?? 'log.md';
-  const sourcesKey = input.sourcesKey ?? 'fuentes';
+  const sourcesKey = input.sourcesKey ?? 'sources';
 
   const index = input.pages.find(page => page.path === indexName) ?? null;
   const entries = input.pages.filter(page => page.path !== indexName && page.path !== logName);
@@ -303,7 +303,7 @@ const MENTION_CAP = 4;
  *   named `lisa-*`, the word `lisa` is nobody's subject, because a suggestion
  *   could not say which page it means.
  * - **In the prose, not the furniture.** Frontmatter, headings and fenced code
- *   are stripped first: `fuentes:` and `## Modelo Lisa` name things
+ *   are stripped first: `sources:` and `## Modelo Lisa` name things
  *   structurally, and a fence is code or quoted metadata, not speech.
  * - **Often enough.** At least `MIN_MENTIONS` word starts, repeats capped at
  *   `MENTION_CAP`.
@@ -311,16 +311,16 @@ const MENTION_CAP = 4;
  *   links the page already carries: `[[modelo-lisa]]`,
  *   `[[01-lisa/modelo-lisa]]` and `[[Modelo Lisa]]` all count as linked.
  * - **Not the ordinary parent-and-child pattern.** A page always names its own
- *   sources in `fuentes`, and the notes distilled into it name the page they
+ *   sources in `sources`, and the notes distilled into it name the page they
  *   wrote; both directions are the normal shape of the wiki, so a pair whose
- *   target sits in the source's own `fuentes` is skipped.
+ *   target sits in the source's own `sources` is skipped.
  *
  * The strongest suggestions come first; ties break by page and then target, so
  * the report is stable across runs.
  */
 export function findMissingLinks(
   entries: readonly WikiPage[],
-  sourcesKey = 'fuentes',
+  sourcesKey = 'sources',
   minMentions: number = MIN_MENTIONS,
 ): MissingLink[] {
   // The folded words of each page's name worth matching on, and how many pages

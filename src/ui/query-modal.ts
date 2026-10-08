@@ -184,7 +184,7 @@ export class QueryModal extends Modal {
       // section, so the panel was repeating the same information, and only one of
       // the two copies was clickable (the answer's are wikilinks) while the other
       // was plain text. The list still travels with the answer into the saved
-      // note (`fuentes` frontmatter) and into the log.
+      // note (`sources` frontmatter) and into the log.
       this.sourcesEl.empty();
       if (this.ctx.settings.saveAnswersToNote) {
         this.saveBtn.style.display = '';

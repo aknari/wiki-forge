@@ -83,9 +83,9 @@ check(
 // The answer a local model gave, verbatim, once the output contract was in the
 // prompt. The `20-wiki/` prefix stays: stripping it is `normalizeVaultPath`'s job.
 const GOOD_ANSWER =
-  'FILE: 20-wiki/00-indice/indice-teoria-practica.md\nCONTENT:\n---\ntipo: concepto\n---\n# Teoría\n# Prácticas\n---END---';
+  'FILE: 20-wiki/00-indice/indice-teoria-practica.md\nCONTENT:\n---\ntype: concept\n---\n# Teoría\n# Prácticas\n---END---';
 check('a real answer is one page', parseFileBlocks(GOOD_ANSWER), [
-  { path: '20-wiki/00-indice/indice-teoria-practica.md', text: '---\ntipo: concepto\n---\n# Teoría\n# Prácticas' },
+  { path: '20-wiki/00-indice/indice-teoria-practica.md', text: '---\ntype: concept\n---\n# Teoría\n# Prácticas' },
 ]);
 // The old reader split on `FILE: ` and took everything up to the end, so the
 // second page ended up glued to the first.
@@ -131,8 +131,8 @@ check(
 );
 check(
   'a path with a space is still a page: losing it would be worse',
-  parseFileBlocks('FILE: 02-lisa/concepto lisa.md\nCONTENT:\nx\n---END---'),
-  [{ path: '02-lisa/concepto lisa.md', text: 'x' }],
+  parseFileBlocks('FILE: 02-lisa/concept lisa.md\nCONTENT:\nx\n---END---'),
+  [{ path: '02-lisa/concept lisa.md', text: 'x' }],
 );
 
 // --- the paths a draft names, which decide whether there is a merge to do ---------

@@ -9,12 +9,11 @@
  * - The **first heading is the question**. The index titles a page by its first
  *   heading, so the old `## Question` heading listed every saved answer in the
  *   index as “Question”, one identical line after another.
- * - The sources go in **`fuentes:`**, the key the wiki pages use and the one the
- *   check reads. Written as `sources:` every saved answer was reported as a page
- *   whose source does not resolve. They go **only** there: the answer already
- *   closes with the model's own "Fuentes" section of wikilinks, which is the
- *   clickable one, so a second list in the body only repeated it — with real
- *   paths, but repeated. An answer that read no page declares `fuentes: []`.
+ * - The sources go in **`sources:`**, the key the wiki pages use and the one the
+ *   check reads. They go **only** there: the answer already closes with the
+ *   model's own "Sources" section of wikilinks, which is the clickable one, so a
+ *   second list in the body only repeated it — with real paths, but repeated. An
+ *   answer that read no page declares `sources: []`.
  * - The file name keeps the **`YYYY-MM-DD-HHMM` stamp** rather than a slug of the
  *   question: it is the convention the query notes already had, a stamp cannot
  *   collide with a topic page, and a whole question is not a good file name
@@ -144,7 +143,7 @@ export function renderAnswerNote(
     '---',
     `question: "${title.replace(/"/g, '\\"')}"`,
     `date: ${now.toISOString()}`,
-    `fuentes: [${links.map(link => `"${link}"`).join(', ')}]`,
+    `sources: [${links.map(link => `"${link}"`).join(', ')}]`,
     '---',
   ].join('\n');
 

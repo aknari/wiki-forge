@@ -182,7 +182,7 @@ export function firstHeading(body: string): string | null {
  * The opening of a page, in the page's own words: what it is about.
  *
  * This is what puts the *content* in the index. The index is the entry point of
- * every query, and it used to list each page as `[[link|Title]] — tipo`, so the
+ * every query, and it used to list each page as `[[link|Title]] — type`, so the
  * selection phase had to choose which pages answer a question from titles alone —
  * while the query rules say in so many words that the index carries "the
  * hierarchy and **summaries** of the available pages". With a real case: asked
@@ -410,7 +410,7 @@ export function linkTarget(value: string): string {
 
 /**
  * A page whose metadata arrived inside a code fence, put back where Obsidian
- * reads it: `tags`, `tipo`, `fuentes`… in the frontmatter, not in a ```yaml
+ * reads it: `tags`, `type`, `sources`… in the frontmatter, not in a ```yaml
  * block at the top of the body.
  *
  * Where it came from: the model is asked to write a page with YAML frontmatter,
@@ -418,8 +418,8 @@ export function linkTarget(value: string): string {
  * it is asked to reformat **its own text**. It reformats faithfully — frontmatter
  * included, fence included. The page then exists, reads well, and is wrong in two
  * quiet ways: Obsidian shows no properties for it, and every key the wiki is
- * organised by (`tipo` above all: the index lists each page with the one in its
- * frontmatter, and the checker reads `fuentes` from there) is invisible.
+ * organised by (`type` above all: the index lists each page with the one in its
+ * frontmatter, and the checker reads `sources` from there) is invisible.
  *
  * Why hoist instead of delete: the keys inside the fence are the only copy, which
  * is why the checker reports this as `fenced-metadata` and refuses to touch it.

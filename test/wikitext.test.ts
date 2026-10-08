@@ -37,24 +37,24 @@ function check(description: string, actual: unknown, expected: unknown): void {
 }
 
 // ------------------------------------------------------------------ frontmatter
-const withFrontmatter = splitFrontmatter('---\ntipo: concepto\ntags: [a, b]\nfuentes: ["[[00 - Lisa]]"]\n---\n# Título\n\ncuerpo\n');
+const withFrontmatter = splitFrontmatter('---\ntype: concept\ntags: [a, b]\nsources: ["[[00 - Lisa]]"]\n---\n# Título\n\ncuerpo\n');
 check('frontmatter is separated from the body', withFrontmatter.body.trim(), '# Título\n\ncuerpo');
-check('keys are read', withFrontmatter.keys['tipo'], 'concepto');
+check('keys are read', withFrontmatter.keys['type'], 'concept');
 check('an inline list is read', frontmatterList(withFrontmatter, 'tags'), ['a', 'b']);
-check('a quoted wikilink keeps its brackets', frontmatterList(withFrontmatter, 'fuentes'), ['[[00 - Lisa]]']);
+check('a quoted wikilink keeps its brackets', frontmatterList(withFrontmatter, 'sources'), ['[[00 - Lisa]]']);
 check('a missing key is an empty list', frontmatterList(withFrontmatter, 'nope'), []);
 
 const noFrontmatter = splitFrontmatter('# Solo cuerpo\n');
 check('a file without frontmatter is all body', [noFrontmatter.frontmatter, noFrontmatter.body], [null, '# Solo cuerpo\n']);
 
-const midFile = splitFrontmatter('texto\n\n---\n\ntipo: concepto\n');
+const midFile = splitFrontmatter('texto\n\n---\n\ntype: concept\n');
 check('a `---` further down is a rule, not frontmatter', midFile.frontmatter, null);
 
-const unterminated = splitFrontmatter('---\ntipo: concepto\n');
+const unterminated = splitFrontmatter('---\ntype: concept\n');
 check('an unclosed block is not frontmatter', unterminated.frontmatter, null);
 
-const blockList = splitFrontmatter('---\nfuentes:\n  - "[[a]]"\n  - "[[b]]"\n---\ncuerpo\n');
-check('a `- item` block is read too', frontmatterList(blockList, 'fuentes'), ['[[a]]', '[[b]]']);
+const blockList = splitFrontmatter('---\nsources:\n  - "[[a]]"\n  - "[[b]]"\n---\ncuerpo\n');
+check('a `- item` block is read too', frontmatterList(blockList, 'sources'), ['[[a]]', '[[b]]']);
 
 // --------------------------------------------------------------------- links
 check('a plain link', wikilinkTargets('ver [[modelo-lisa]]'), ['modelo-lisa']);
@@ -116,11 +116,11 @@ check('a bare `-->` is ordinary text', detectArtifacts('# Nota\n\n-->\n').length
 check('a real comment marker is not a leftover', detectArtifacts('# Nota\n\n<!-- tc:start -->\n\nTareas\n').length, 0);
 check('a task-consolidator marker survives stripping', stripArtifacts('<!-- tc:start -->\n\n- [ ] algo\n').content, '<!-- tc:start -->\n\n- [ ] algo\n');
 
-const empty = detectArtifacts('---\ntipo: concepto\n---\n');
+const empty = detectArtifacts('---\ntype: concept\n---\n');
 check('an empty page is reported', empty.map(a => a.kind), ['empty-page']);
 check('but it is not fixed automatically', empty[0]?.fixable, false);
 
-const duplicated = detectArtifacts('---\ntipo: concepto\n---\n---\ncreated: 2026-01-01\n---\n# Nota\n');
+const duplicated = detectArtifacts('---\ntype: concept\n---\n---\ncreated: 2026-01-01\n---\n# Nota\n');
 check('a second frontmatter block is reported', duplicated.map(a => a.kind), ['duplicate-frontmatter']);
 check('and left for a human, not removed', duplicated[0]?.fixable, false);
 
@@ -132,8 +132,8 @@ const fencedMetadata = [
   'updated: 2026-04-15T10:29',
   '---',
   '```yaml',
-  'tipo: metodo',
-  'fuentes: ["[[90-support]]"]',
+  'type: method',
+  'sources: ["[[90-support]]"]',
   '```',
   '# Sargantana',
 ].join('\n');
@@ -151,12 +151,12 @@ check('a block wrapping the page is not treated as a leftover', detectArtifacts(
 //
 // The reformatting pass asks the model to rewrite its own document, and it keeps
 // the ```yaml fence it wrote it in. The page then reads well and the wiki cannot
-// see a single key of it — no `tipo` in the index, no `fuentes` for the checker.
+// see a single key of it — no `type` in the index, no `sources` for the checker.
 const fencedPage = [
   '```yaml',
   'tags: [lisa, arquitectura]',
-  'tipo: concepto',
-  'fuentes: ["[[Comments and ideas concerning Lisa]]"]',
+  'type: concept',
+  'sources: ["[[Comments and ideas concerning Lisa]]"]',
   '```',
   '',
   '# Arquitectura de Lisa',
@@ -169,8 +169,8 @@ check(
   [
     '---',
     'tags: [lisa, arquitectura]',
-    'tipo: concepto',
-    'fuentes: ["[[Comments and ideas concerning Lisa]]"]',
+    'type: concept',
+    'sources: ["[[Comments and ideas concerning Lisa]]"]',
     '---',
     '# Arquitectura de Lisa',
     '',
@@ -179,11 +179,11 @@ check(
   ].join('\n'),
 );
 
-const multiLine = ['```yaml', 'tags:', '  - lisa', '  - csrs', 'tipo: concepto', '```', '# CSRs'].join('\n');
+const multiLine = ['```yaml', 'tags:', '  - lisa', '  - csrs', 'type: concept', '```', '# CSRs'].join('\n');
 check(
   'an indented list travels with its key',
   hoistFencedFrontmatter(multiLine),
-  ['---', 'tags:', '  - lisa', '  - csrs', 'tipo: concepto', '---', '# CSRs', ''].join('\n'),
+  ['---', 'tags:', '  - lisa', '  - csrs', 'type: concept', '---', '# CSRs', ''].join('\n'),
 );
 
 const withCreated = [
@@ -193,26 +193,26 @@ const withCreated = [
   '---',
   '```yaml',
   'tags: [nuevo]',
-  'tipo: concepto',
+  'type: concept',
   '```',
   '# Título',
 ].join('\n');
 check(
   'a key the page already declares keeps its value, and the fence goes',
   hoistFencedFrontmatter(withCreated),
-  ['---', 'created: 2026-09-15T22:33', 'tags: [viejo]', 'tipo: concepto', '---', '# Título', ''].join('\n'),
+  ['---', 'created: 2026-09-15T22:33', 'tags: [viejo]', 'type: concept', '---', '# Título', ''].join('\n'),
 );
 
 // A duplicated fence over an identical frontmatter is only removed.
-const fencedDuplicate = ['---', 'tipo: concepto', '---', '```yaml', 'tipo: concepto', '```', '# Título'].join('\n');
+const fencedDuplicate = ['---', 'type: concept', '---', '```yaml', 'type: concept', '```', '# Título'].join('\n');
 check(
   'a purely duplicated fence is dropped, not merged twice',
   hoistFencedFrontmatter(fencedDuplicate),
-  ['---', 'tipo: concepto', '---', '# Título', ''].join('\n'),
+  ['---', 'type: concept', '---', '# Título', ''].join('\n'),
 );
 
 // --- and what must be left exactly as it is ---------------------------------
-const correct = ['---', 'tipo: concepto', '---', '# Título', '', 'Cuerpo.'].join('\n');
+const correct = ['---', 'type: concept', '---', '# Título', '', 'Cuerpo.'].join('\n');
 check('a page that is already right is untouched', hoistFencedFrontmatter(correct), correct);
 
 const codeSample = ['```cpp', 'int main() {', '  return 0;', '}', '```', '', '# Título'].join('\n');
@@ -221,7 +221,7 @@ check('a code sample at the top is not frontmatter', hoistFencedFrontmatter(code
 const pythonSample = ['```python', 'def f():', '    return 1', '```', '# Título'].join('\n');
 check('nor is a Python one', hoistFencedFrontmatter(pythonSample), pythonSample);
 
-const laterFence = ['# Título', '', '```yaml', 'tipo: concepto', '```'].join('\n');
+const laterFence = ['# Título', '', '```yaml', 'type: concept', '```'].join('\n');
 check('a fence further down belongs to the body', hoistFencedFrontmatter(laterFence), laterFence);
 
 const wrappedPage = ['```', '- [[a]]', '- [[b]]', '```'].join('\n');
@@ -236,7 +236,7 @@ check(
 // not by title alone. The fixture is the real opening of a real page.
 const lisaOpening = [
   '---',
-  'tipo: concepto',
+  'type: concept',
   '---',
   '# Arquitectura de Lisa',
   '',

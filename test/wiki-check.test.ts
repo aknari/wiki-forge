@@ -44,8 +44,8 @@ const pages = [
     path: '01-lisa/modelo-lisa.md',
     content: [
       '---',
-      'tipo: concepto',
-      'fuentes: ["[[00 - Lisa]]"]',
+      'type: concept',
+      'sources: ["[[00 - Lisa]]"]',
       '---',
       '# Modelo Lisa',
       '',
@@ -56,8 +56,8 @@ const pages = [
     path: '01-lisa/pipeline-de-datos.md',
     content: [
       '---',
-      'tipo: concepto',
-      'fuentes: ["[[00 - Lisa]]"]',
+      'type: concept',
+      'sources: ["[[00 - Lisa]]"]',
       '---',
       '# Pipeline de datos',
       '',
@@ -68,8 +68,8 @@ const pages = [
     path: '02-plasma/sbbclock.md',
     content: [
       '---',
-      'tipo: fuente',
-      'fuentes: ["[[no-existe]]"]',
+      'type: source',
+      'sources: ["[[no-existe]]"]',
       '---',
       '```',
       'created: 2026-01-01',
@@ -144,19 +144,19 @@ check('the index leaves out the log', index.includes('[[log|'), false);
 check('and its own entry', index.includes('- [[index|'), false);
 check('it groups by folder and counts', index.includes('## 01-lisa — 2'), true);
 check('the second folder too', index.includes('## 02-plasma — 1'), true);
-check('a page is listed with its own heading and type', index.includes('- [[modelo-lisa|Modelo Lisa]] — `concepto`'), true);
-check('and one without a heading falls back to its file name', index.includes('- [[sbbclock|sbbclock]] — `fuente`'), true);
+check('a page is listed with its own heading and type', index.includes('- [[modelo-lisa|Modelo Lisa]] — `concept`'), true);
+check('and one without a heading falls back to its file name', index.includes('- [[sbbclock|sbbclock]] — `source`'), true);
 check('the index is marked as generated', index.includes('generated_by: WikiForge'), true);
 // The type alone was not enough to select by: a title says nothing about what a
 // page answers, and the query rules promise the index carries summaries.
 check(
   'and the opening of the page, so it can be chosen by content',
-  index.includes('- [[modelo-lisa|Modelo Lisa]] — `concepto` — Enlaza con pipeline-de-datos y con kde.'),
+  index.includes('- [[modelo-lisa|Modelo Lisa]] — `concept` — Enlaza con pipeline-de-datos y con kde.'),
   true,
 );
 check(
   'a page whose metadata sits in a fence still shows its opening',
-  index.includes('- [[sbbclock|sbbclock]] — `fuente` — Sin enlaces salientes.'),
+  index.includes('- [[sbbclock|sbbclock]] — `source` — Sin enlaces salientes.'),
   true,
 );
 check('an empty wiki says so', buildWikiIndex([], {
@@ -164,14 +164,14 @@ check('an empty wiki says so', buildWikiIndex([], {
   indexName: 'index.md',
   logName: 'log.md',
   generatedAt: '2026-09-15T10:00:00.000Z',
-}).includes('La wiki está vacía'), true);
+}).includes('The wiki is empty'), true);
 
 // ------------------------------------------------------------------- repairs
 const repairs = planRepairs(entries, knownTitles);
 check('only the page that changes is planned', repairs.map(r => r.path), ['02-plasma/sbbclock.md']);
 check('the leftover is what changes there', repairs[0]?.fixes.map(f => f.kind), ['artifact']);
 check('the block is gone from the result', repairs[0]?.after.includes('```'), false);
-check('and the frontmatter survives', repairs[0]?.after.includes('tipo: fuente'), true);
+check('and the frontmatter survives', repairs[0]?.after.includes('type: source'), true);
 check('the summary counted it once', summarizeRepairs(repairs), { pages: 1, links: 0, artifacts: 1 });
 
 const typo = repairPage({ path: 'x.md', content: 'Ver [[metodologia-de-verificacion]].\n' }, ['metodologia-verificacion']);
@@ -194,7 +194,7 @@ const traced = checkWiki({
     { path: 'index.md', content: '# i\n' },
     {
       path: '01-x/a.md',
-      content: '---\ntipo: fuente\nfuentes: ["[[00-src/30-dev/30-lisa/00 - Lisa.md]]"]\n---\n# A\n',
+      content: '---\ntype: source\nsources: ["[[00-src/30-dev/30-lisa/00 - Lisa.md]]"]\n---\n# A\n',
     },
   ],
   knownTitles: ['index', 'a', '00-src/30-dev/30-lisa/00 - Lisa'],
@@ -213,7 +213,7 @@ const mini = [
     path: '01-lisa/modelo-lisa.md',
     content: [
       '---',
-      'fuentes: ["[[00 - Lisa]]"]',
+      'sources: ["[[00 - Lisa]]"]',
       '---',
       '# Modelo Lisa',
       '',
@@ -224,7 +224,7 @@ const mini = [
     path: '01-lisa/pipeline-de-datos.md',
     content: [
       '---',
-      'fuentes: ["[[modelo-lisa]]"]',
+      'sources: ["[[modelo-lisa]]"]',
       '---',
       '# Pipeline de datos',
       '',
@@ -240,7 +240,7 @@ const mini = [
     path: '02-plasma/sbbclock.md',
     content: [
       '---',
-      'fuentes: ["[[00 - Lisa]]"]',
+      'sources: ["[[00 - Lisa]]"]',
       '---',
       '# sbbclock',
       '',
@@ -311,12 +311,12 @@ const declaredSource = checkWiki({
     { path: 'a/capacitor.md', content: '# Capacitor\n\nnota\n' },
     {
       path: 'b/tuner.md',
-      content: '---\nfuentes: ["[[capacitor]]"]\n---\n# Tuner\n\nEl capacitor aparece, el capacitor manda, el capacitor cierra.\n',
+      content: '---\nsources: ["[[capacitor]]"]\n---\n# Tuner\n\nEl capacitor aparece, el capacitor manda, el capacitor cierra.\n',
     },
   ],
   knownTitles: ['index', 'capacitor', 'tuner'],
 });
-check('the normal fuentes pattern is not a missing link', declaredSource.missingLinks, []);
+check('the normal sources pattern is not a missing link', declaredSource.missingLinks, []);
 
 const fewMentions = checkWiki({
   pages: [
