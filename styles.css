@@ -161,6 +161,25 @@
   padding-left: 8px;
 }
 
+/* The report path, which opens the report note. It is a button for the click to
+   reach it, but it sits inside a sentence, so it has to read as a link. */
+.wf-report-link {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  color: var(--link-color);
+  font-family: var(--font-monospace);
+  font-size: 0.95em;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.wf-report-link:hover {
+  text-decoration: underline;
+}
+
 .wf-report-buttons {
   display: flex;
   gap: 8px;

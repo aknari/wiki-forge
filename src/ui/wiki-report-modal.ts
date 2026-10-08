@@ -1,4 +1,4 @@
-import { App, Modal } from 'obsidian';
+import { App, Modal, TFile } from 'obsidian';
 import type { WikiReport } from '../wiki-check';
 import { summarizeRepairs, type PageRepair } from '../wiki-clean';
 
@@ -52,9 +52,22 @@ export class WikiReportModal extends Modal {
       });
     }
 
-    this.contentEl.createEl('p', {
-      text: `Full report: ${this.reportPath}`,
-    });
+    // The report sits outside the wiki, where nothing else points to it, so this
+    // path is the only way in and hunting for the note by hand is the slow way.
+    // It reads as a link but is a button, like the note list in the query panel:
+    // a modal blocks the workspace, so it has to close before the note can be read.
+    const reportLine = this.contentEl.createEl('p');
+    reportLine.createEl('span', { text: 'Full report: ' });
+    if (this.app.vault.getAbstractFileByPath(this.reportPath) instanceof TFile) {
+      const link = reportLine.createEl('button', { text: this.reportPath, cls: 'wf-report-link' });
+      link.addEventListener('click', () => {
+        this.close();
+        void this.app.workspace.openLinkText(this.reportPath, '');
+      });
+    } else {
+      // Nothing to open: a dead button is worse than a plain path.
+      reportLine.createEl('span', { text: this.reportPath });
+    }
 
     const fixes = r.fixableLinks + r.fixableArtifacts;
     const buttons = this.contentEl.createEl('div', { cls: 'wf-report-buttons' });
