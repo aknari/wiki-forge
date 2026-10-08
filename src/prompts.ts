@@ -33,6 +33,10 @@ English: they are a controlled vocabulary, not prose):
   \`\`\`
   Property names are always in English. Do **not** write \`created\` or \`updated\`: another
   plugin owns those two keys and keeps them in sync with the real edit time.
+  \`sources\` names a **note**, by its file name without the extension (\`[[00 - Lisa]]\`): the
+  note you actually read. Never write an internal identifier or a field value there — an
+  \`operonId\`, a UUID, a block id — or anything that is not the name of one of your sources:
+  a source that names no note is a broken link, not a citation.
 - **Wikilinks**: Link **only** to pages that already exist in \`20-wiki/\` or that you are creating in this same operation. Never invent links to fill a quota: a link to a page that does not exist is an error, not a detail. When in doubt, do not link.
 - **Language**: Always write in the language of the sources (predominantly Spanish in this system).
 - **Wiki content only**: write nothing but pages under \`20-wiki/\`. No notes addressed to the user, no commentary about your own process (no “this is where…”, no “pending…”).
